@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Formulaires{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Mes Formulaires</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">Formulaires créés par moi</h2>
+    <a href="{{ url_for('forms.create_form') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Créer un nouveau formulaire
+    </a>
+</div>
+
+{% if my_forms %}
+<div class="table-responsive mb-5">
+    <table class="table table-hover table-striped">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Créé le</th>
+                <th>Actif</th>
+                <th>Réponses</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in my_forms %}
+            <tr>
+                <td><a href="{{ url_for('forms.view_form', form_id=form.id) }}">{{ form.title }}</a></td>
+                <td>{{ form.description | truncate(50) }}</td>
+                <td>{{ form.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if form.is_active else 'danger' }}">
+                        {{ 'Oui' if form.is_active else 'Non' }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('forms.view_responses', form_id=form.id) }}" class="btn btn-sm btn-outline-secondary">
+                        {{ form.responses.count() }} <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('forms.edit_form', form_id=form.id) }}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                        <a href="{{ url_for('forms.share_form', form_id=form.id) }}" class="btn btn-sm btn-primary" title="Partager"><i class="fas fa-share-alt"></i></a>
+                        <form action="{{ url_for('forms.delete_form', form_id=form.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce formulaire et toutes ses réponses ?');">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="alert alert-info">Vous n'avez pas encore créé de formulaires. <a href="{{ url_for('forms.create_form') }}">Créez-en un maintenant!</a></p>
+{% endif %}
+
+<h2 class="h4 mb-3">Formulaires partagés avec moi</h2>
+
+{% if shared_forms %}
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Partagé par</th>
+                <th>Peut modifier</th>
+                <th>Peut voir les réponses</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in shared_forms %}
+            {% set share_entry = form.shares.filter_by(shared_with_id=current_user.id).first() %}
+            <tr>
+                <td><a href="{{ url_for('forms.view_form', form_id=form.id) }}">{{ form.title }}</a></td>
+                <td>{{ form.description | truncate(50) }}</td>
+                <td>{{ form.author.username }}</td>
+                <td>
+                    <span class="badge bg-{{ 'success' if share_entry.can_edit else 'danger' }}">
+                        {{ 'Oui' if share_entry.can_edit else 'Non' }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-{{ 'success' if share_entry.can_view_responses else 'danger' }}">
+                        {{ 'Oui' if share_entry.can_view_responses else 'Non' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('forms.view_form', form_id=form.id) }}" class="btn btn-sm btn-secondary" title="Voir le formulaire"><i class="fas fa-eye"></i></a>
+                        {% if share_entry.can_edit %}
+                        <a href="{{ url_for('forms.edit_form', form_id=form.id) }}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                        {% endif %}
+                        {% if share_entry.can_view_responses %}
+                        <a href="{{ url_for('forms.view_responses', form_id=form.id) }}" class="btn btn-sm btn-success" title="Voir les réponses"><i class="fas fa-list-alt"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="alert alert-info">Aucun formulaire n'a été partagé avec vous.</p>
+{% endif %}
+{% endblock %}

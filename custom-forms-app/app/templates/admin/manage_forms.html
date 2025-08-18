@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Gérer les formulaires{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Gérer les formulaires</h1>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Rechercher et Filtrer</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.manage_forms') }}" class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <label for="search" class="visually-hidden">Rechercher</label>
+                <input type="text" class="form-control" id="search" name="search" placeholder="Rechercher par titre ou auteur..." value="{{ search }}">
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+                <a href="{{ url_for('admin.manage_forms') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if forms.items %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Titre</th>
+                        <th>Auteur</th>
+                        <th>Créé le</th>
+                        <th>Actif</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in forms.items %}
+                    <tr>
+                        <td>{{ form.id }}</td>
+                        <td><a href="{{ url_for('forms.view_form', form_id=form.id) }}">{{ form.title }}</a></td>
+                        <td>{{ form.author.username }}</td>
+                        <td>{{ form.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if form.is_active else 'danger' }}">
+                                {{ 'Oui' if form.is_active else 'Non' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('forms.edit_form', form_id=form.id) }}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                                <a href="{{ url_for('forms.view_responses', form_id=form.id) }}" class="btn btn-sm btn-secondary" title="Voir les réponses"><i class="fas fa-eye"></i></a>
+                                <form action="{{ url_for('admin.toggle_form_status', form_id=form.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-{{ 'warning' if form.is_active else 'success' }}" title="{{ 'Désactiver' if form.is_active else 'Activer' }}">
+                                        <i class="fas fa-{{ 'ban' if form.is_active else 'check-circle' }}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.delete_form', form_id=form.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce formulaire et toutes ses réponses ?');">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if forms.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('admin.manage_forms', page=forms.prev_num, search=search) }}">Précédent</a></li>
+                {% endif %}
+                {% for page_num in forms.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num == forms.page %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ page_num }}</a></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.manage_forms', page=page_num, search=search) }}">{{ page_num }}</a></li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if forms.has_next %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('admin.manage_forms', page=forms.next_num, search=search) }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <p class="text-center">Aucun formulaire trouvé.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

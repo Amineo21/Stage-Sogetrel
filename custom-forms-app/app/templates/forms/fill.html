@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Remplir le formulaire - {{ form_obj.title }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    .signature-pad {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        width: 100%;
+        height: 200px;
+    }
+    .map-container {
+        height: 300px;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ form_obj.title }}</h1>
+<p class="text-muted">{{ form_obj.description }}</p>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="dynamicForm">
+            {% for field in form_obj.form_data %}
+            <div class="mb-3">
+                <label for="{{ field.id }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {% if field.type == 'text' %}
+                    <input type="text" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %} {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}>
+                {% elif field.type == 'textarea' %}
+                    <textarea class="form-control" id="{{ field.id }}" name="{{ field.name }}" rows="{{ field.rows }}" {% if field.required %}required{% endif %} {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}></textarea>
+                {% elif field.type == 'number' %}
+                    <input type="number" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %} {% if field.min %}min="{{ field.min }}"{% endif %} {% if field.max %}max="{{ field.max }}"{% endif %} {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}>
+                {% elif field.type == 'email' %}
+                    <input type="email" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %} {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}>
+                {% elif field.type == 'password' %}
+                    <input type="password" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %} {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}>
+                {% elif field.type == 'date' %}
+                    <input type="date" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                {% elif field.type == 'time' %}
+                    <input type="time" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                {% elif field.type == 'datetime-local' %}
+                    <input type="datetime-local" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                {% elif field.type == 'checkbox' %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                        <label class="form-check-label" for="{{ field.id }}">
+                            {{ field.checkbox_label }}
+                        </label>
+                    </div>
+                {% elif field.type == 'radio' %}
+                    {% for choice in field.choices %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="{{ field.name }}" id="{{ field.id }}_{{ loop.index }}" value="{{ choice.value }}" {% if field.required %}required{% endif %}>
+                        <label class="form-check-label" for="{{ field.id }}_{{ loop.index }}">
+                            {{ choice.label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% elif field.type == 'select' %}
+                    <select class="form-select" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                        {% if field.placeholder %}<option value="" disabled selected>{{ field.placeholder }}</option>{% endif %}
+                        {% for choice in field.choices %}
+                            <option value="{{ choice.value }}">{{ choice.label }}</option>
+                        {% endfor %}
+                    </select>
+                {% elif field.type == 'file' %}
+                    <input type="file" class="form-control" id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                    {% if field.allowed_extensions %}
+                        <small class="form-text text-muted">Extensions autorisées: {{ field.allowed_extensions | join(', ') }}</small>
+                    {% endif %}
+                {% elif field.type == 'signature' %}
+                    <canvas id="{{ field.id }}" class="signature-pad" width="400" height="200"></canvas>
+                    <input type="hidden" id="{{ field.id }}_data" name="{{ field.name }}">
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="clearSignature('{{ field.id }}')">Effacer la signature</button>
+                {% elif field.type == 'geolocation' %}
+                    <button type="button" class="btn btn-info btn-sm" onclick="getGeolocation('{{ field.id }}')">
+                        <i class="fas fa-map-marker-alt me-2"></i>Obtenir ma position
+                    </button>
+                    <input type="text" class="form-control mt-2" id="{{ field.id }}_display" placeholder="Latitude, Longitude" readonly>
+                    <input type="hidden" id="{{ field.id }}_lat" name="{{ field.name }}_lat">
+                    <input type="hidden" id="{{ field.id }}_lon" name="{{ field.name }}_lon">
+                    <div id="{{ field.id }}_map" class="map-container" style="display:none;"></div>
+                {% endif %}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-lg mt-4">Soumettre</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/signature.js') }}"></script>
+<script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les pads de signature
+        document.querySelectorAll('canvas.signature-pad').forEach(canvas => {
+            initSignaturePad(canvas.id);
+        });
+
+        // Gérer la soumission du formulaire pour capturer les données de signature
+        document.getElementById('dynamicForm').addEventListener('submit', function(event) {
+            document.querySelectorAll('canvas.signature-pad').forEach(canvas => {
+                const signaturePad = window.signaturePads[canvas.id];
+                if (!signaturePad.isEmpty()) {
+                    document.getElementById(`${canvas.id}_data`).value = signaturePad.toDataURL();
+                } else {
+                    document.getElementById(`${canvas.id}_data`).value = ''; // Assurez-vous que le champ est vide si pas de signature
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

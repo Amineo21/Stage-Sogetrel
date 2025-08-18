@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Réponses du formulaire - {{ form_obj.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Réponses pour: {{ form_obj.title }}</h1>
+    <p class="text-muted">{{ form_obj.description }}</p>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{{ url_for('forms.edit_form', form_id=form_obj.id) }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Retour à l'édition
+        </a>
+        <a href="{{ url_for('forms.export_responses', form_id=form_obj.id) }}" class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel me-2"></i>Exporter en Excel
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if responses %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Réponse</th>
+                    <th>Soumis par</th>
+                    <th>Date de soumission</th>
+                    <th>Adresse IP</th>
+                    <th>Géolocalisation</th>
+                    {% for header in column_headers %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for response in responses %}
+                <tr>
+                    <td>{{ response.id }}</td>
+                    <td>{{ response.responder.username if response.responder else 'Anonyme' }}</td>
+                    <td>{{ response.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ response.ip_address }}</td>
+                    <td>{{ response.geolocation if response.geolocation else 'N/A' }}</td>
+                    {% set response_data = response.response_data | from_json %}
+                    {% for field in form_obj.form_data %}
+                        {% set field_id = field.id %}
+                        {% set value = response_data.get(field_id) %}
+                        <td>
+                            {% if field.type == 'file' and value and value.filename %}
+                                {% set file_path = url_for('static', filename='uploads/' + value.filename) %}
+                                <a href="{{ file_path }}" target="_blank" download="{{ value.original_name }}">
+                                    <i class="fas fa-file-download me-1"></i>{{ value.original_name }}
+                                </a>
+                                <br><small class="text-muted">({{ (value.size / 1024) | round(2) }} KB)</small>
+                            {% elif field.type == 'signature' and value and value.filename %}
+                                {% set signature_path = url_for('static', filename='uploads/' + value.filename) %}
+                                <a href="{{ signature_path }}" target="_blank">
+                                    <img src="{{ signature_path }}" alt="Signature" style="max-width: 100px; height: auto; border: 1px solid #eee;">
+                                </a>
+                            {% elif field.type == 'checkbox' %}
+                                <span class="badge bg-{{ 'success' if value else 'danger' }}">{{ 'Oui' if value else 'Non' }}</span>
+                            {% elif field.type == 'geolocation' %}
+                                {% if value %}
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ value }}" target="_blank">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ value }}
+                                    </a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            {% else %}
+                                {{ value if value is not none else 'N/A' }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="alert alert-info text-center">Aucune réponse soumise pour ce formulaire pour le moment.</p>
+    {% endif %}
+</div>
+
+<!-- Modal pour afficher les images en grand -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Aperçu de l'image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="/placeholder.svg" id="modalImage" class="img-fluid" alt="Image en grand">
+            </div>
+            <div class="modal-footer">
+                <a href="" id="downloadImageBtn" class="btn btn-primary" download>Télécharger</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageModal = document.getElementById('imageModal');
+        imageModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const imageSrc = button.getAttribute('data-image-src');
+            const modalImage = imageModal.querySelector('#modalImage');
+            const downloadImageBtn = imageModal.querySelector('#downloadImageBtn');
+            
+            modalImage.src = imageSrc;
+            downloadImageBtn.href = imageSrc;
+        });
+    });
+</script>
+{% endblock %}

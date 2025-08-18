@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Créer un formulaire{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Créer un nouveau formulaire</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('forms.create_form') }}" id="form-builder-form">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control", placeholder="Titre de votre formulaire") }}
+                    {% for error in form.title.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows="3", placeholder="Description du formulaire (optionnel)") }}
+                    {% for error in form.description.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.is_active(class="form-check-input") }}
+                    {{ form.is_active.label(class="form-check-label") }}
+                    <small class="form-text text-muted">Le formulaire sera visible et collectera des réponses.</small>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.allow_anonymous(class="form-check-input") }}
+                    {{ form.allow_anonymous.label(class="form-check-label") }}
+                    <small class="form-text text-muted">Permettre aux utilisateurs non connectés de soumettre des réponses.</small>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.require_login_to_view(class="form-check-input") }}
+                    {{ form.require_login_to_view.label(class="form-check-label") }}
+                    <small class="form-text text-muted">Les utilisateurs devront être connectés pour voir et remplir le formulaire.</small>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.send_email_on_submit(class="form-check-input") }}
+                    {{ form.send_email_on_submit.label(class="form-check-label") }}
+                    <small class="form-text text-muted">Envoyer une notification par email après chaque soumission.</small>
+                </div>
+                <div class="mb-3">
+                    {{ form.email_recipients.label(class="form-label") }}
+                    {{ form.email_recipients(class="form-control", placeholder="email1@example.com, email2@example.com") }}
+                    {% for error in form.email_recipients.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                    <small class="form-text text-muted">Adresses email séparées par des virgules qui recevront les notifications.</small>
+                </div>
+
+                <hr>
+                <h5 class="mb-3"><i class="fas fa-envelope me-2"></i>Paramètres d'email</h5>
+                <div class="mb-3 form-check">
+                    {{ form.auto_email_enabled(class="form-check-input") }}
+                    {{ form.auto_email_enabled.label(class="form-check-label") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.fixed_recipients.label(class="form-label") }}
+                    {{ form.fixed_recipients(class="form-control", rows="3", placeholder="Un email par ligne (ex: email1@example.com, email2@example.com)") }}
+                    <small class="form-text text-muted">Ces adresses recevront une copie de chaque soumission de ce formulaire.</small>
+                    {% for error in form.fixed_recipients.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <hr>
+                <h5 class="mb-3"><i class="fas fa-list-alt me-2"></i>Champs du formulaire</h5>
+                <div id="form-fields-container">
+                    <!-- Les champs seront ajoutés ici par JavaScript -->
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mb-3" id="add-field-btn"><i class="fas fa-plus me-2"></i>Ajouter un champ</button>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Créer le formulaire</button>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les propriétés de champ -->
+<div class="modal fade" id="fieldPropertiesModal" tabindex="-1" aria-labelledby="fieldPropertiesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fieldPropertiesModalLabel">Propriétés du champ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="field-properties-body">
+                <!-- Les propriétés du champ seront chargées ici -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" id="save-field-properties-btn">Enregistrer les modifications</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/form-builder.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const formBuilder = new FormBuilder('form-fields-container', 'fieldPropertiesModal', 'field-properties-body', 'save-field-properties-btn');
+        
+        document.getElementById('add-field-btn').addEventListener('click', () => {
+            formBuilder.addField();
+        });
+
+        // Charger les champs existants si le formulaire est en mode édition (pour le cas où il y a des erreurs de validation)
+        const existingFieldsData = {{ form.fields.data | tojson }};
+        if (existingFieldsData && existingFieldsData.length > 0) {
+            formBuilder.loadFields(existingFieldsData);
+        }
+    });
+</script>
+{% endblock %}

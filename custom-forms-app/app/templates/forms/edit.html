@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier le formulaire - {{ form_obj.title }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+<style>
+    .form-builder-field {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        cursor: grab;
+    }
+    .form-builder-field:hover {
+        background-color: #e2e6ea;
+    }
+    .form-builder-field.ui-sortable-helper {
+        opacity: 0.8;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .form-builder-field .field-actions {
+        float: right;
+    }
+    .form-builder-field .field-actions button {
+        margin-left: 5px;
+    }
+    .field-options {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+    .field-options .form-check, .field-options .form-group {
+        margin-bottom: 5px;
+    }
+    .field-options .form-check-input {
+        margin-top: 0.3em;
+    }
+    .field-options .form-control-sm {
+        height: calc(1.5em + 0.5rem + 2px);
+        padding: 0.25rem 0.5rem;
+        font-size: .875rem;
+        border-radius: 0.2rem;
+    }
+    .field-options .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: .875rem;
+        border-radius: 0.2rem;
+    }
+    .choice-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    .choice-item input {
+        flex-grow: 1;
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Modifier le formulaire: {{ form_obj.title }}</h1>
+
+<ul class="nav nav-tabs mb-4" id="formEditTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="true">Paramètres</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="builder-tab" data-bs-toggle="tab" data-bs-target="#builder" type="button" role="tab" aria-controls="builder" aria-selected="false">Constructeur de Formulaire</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="share-tab" data-bs-toggle="tab" data-bs-target="#share" type="button" role="tab" aria-controls="share" aria-selected="false">Partager</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="responses-tab" data-bs-toggle="tab" data-bs-target="#responses" type="button" role="tab" aria-controls="responses" aria-selected="false">Réponses</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="formEditTabContent">
+    <div class="tab-pane fade show active" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('forms.edit_form', form_id=form_obj.id) }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {{ form.title(class="form-control", placeholder="Titre de votre formulaire") }}
+                        {% for error in form.title.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="3", placeholder="Description du formulaire (optionnel)") }}
+                        {% for error in form.description.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.is_active(class="form-check-input") }}
+                        {{ form.is_active.label(class="form-check-label") }}
+                        <small class="form-text text-muted">Le formulaire sera visible et collectera des réponses.</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.allow_anonymous(class="form-check-input") }}
+                        {{ form.allow_anonymous.label(class="form-check-label") }}
+                        <small class="form-text text-muted">Permettre aux utilisateurs non connectés de soumettre des réponses.</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.require_login_to_view(class="form-check-input") }}
+                        {{ form.require_login_to_view.label(class="form-check-label") }}
+                        <small class="form-text text-muted">Les utilisateurs devront être connectés pour voir et remplir le formulaire.</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.send_email_on_submit(class="form-check-input") }}
+                        {{ form.send_email_on_submit.label(class="form-check-label") }}
+                        <small class="form-text text-muted">Envoyer une notification par email après chaque soumission.</small>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.email_recipients.label(class="form-label") }}
+                        {{ form.email_recipients(class="form-control", placeholder="email1@example.com, email2@example.com") }}
+                        {% for error in form.email_recipients.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">Adresses email séparées par des virgules qui recevront les notifications.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour les paramètres</button>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-secondary">Retour à la liste</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="builder" role="tabpanel" aria-labelledby="builder-tab">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Types de champs</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="text">Texte court</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="textarea">Texte long</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="number">Nombre</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="email">Email</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="password">Mot de passe</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="date">Date</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="time">Heure</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="datetime-local">Date & Heure</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="checkbox">Case à cocher</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="radio">Boutons radio</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="select">Liste déroulante</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="file">Fichier</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="signature">Signature</button>
+                        <button class="btn btn-outline-primary btn-sm mb-2 w-100" data-field-type="geolocation">Géolocalisation</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Champs du formulaire</h5>
+                        <button id="saveFormFields" class="btn btn-success btn-sm">
+                            <i class="fas fa-save me-2"></i>Sauvegarder les champs
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="formFieldsContainer" class="list-group">
+                            <!-- Les champs seront ajoutés ici par JavaScript -->
+                        </div>
+                        <p id="noFieldsMessage" class="text-muted text-center mt-3" style="display: none;">
+                            Glissez-déposez ou cliquez sur les types de champs pour commencer à construire votre formulaire.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="share" role="tabpanel" aria-labelledby="share-tab">
+        {% include 'forms/share.html' %}
+    </div>
+
+    <div class="tab-pane fade" id="responses" role="tabpanel" aria-labelledby="responses-tab">
+        {% include 'forms/responses.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="{{ url_for('static', filename='js/form-builder.js') }}"></script>
+<script>
+    const FORM_ID = {{ form_obj.id }};
+    const EXISTING_FORM_DATA = {{ existing_form_data | tojson }};
+</script>
+{% endblock %}

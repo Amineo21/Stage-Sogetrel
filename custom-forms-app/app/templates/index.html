@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Custom Forms{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Bienvenue sur Custom Forms!</h1>
+    <p class="lead">Créez, partagez et gérez vos formulaires personnalisés en toute simplicité.</p>
+    <hr class="my-4">
+    <p>Que vous ayez besoin de collecter des données, de réaliser des sondages ou de gérer des inscriptions, notre plateforme est là pour vous aider.</p>
+    <p class="lead">
+        {% if not current_user.is_authenticated %}
+        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.register') }}" role="button">S'inscrire maintenant</a>
+        <a class="btn btn-secondary btn-lg" href="{{ url_for('auth.login') }}" role="button">Se connecter</a>
+        {% else %}
+        <a class="btn btn-primary btn-lg" href="{{ url_for('main.dashboard') }}" role="button">Aller au tableau de bord</a>
+        {% endif %}
+    </p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-edit fa-3x mb-3 text-primary"></i>
+                <h5 class="card-title">Création Facile</h5>
+                <p class="card-text">Créez des formulaires personnalisés avec notre interface intuitive de glisser-déposer.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-share-alt fa-3x mb-3 text-success"></i>
+                <h5 class="card-title">Partage Simplifié</h5>
+                <p class="card-text">Partagez vos formulaires via un lien unique ou intégrez-les facilement sur votre site.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x mb-3 text-info"></i>
+                <h5 class="card-title">Analyse des Réponses</h5>
+                <p class="card-text">Visualisez et exportez les réponses de vos formulaires pour une analyse approfondie.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

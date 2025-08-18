@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Partager le formulaire - {{ form_obj.title }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Partager le formulaire: {{ form_obj.title }}</h1>
+<p class="text-muted">Partagez ce formulaire avec d'autres utilisateurs de la plateforme.</p>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Partager avec un nouvel utilisateur</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('forms.share_form', form_id=form_obj.id) }}">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control", placeholder="Email de l'utilisateur") }}
+                {% for error in form.email.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.can_edit(class="form-check-input") }}
+                {{ form.can_edit.label(class="form-check-label") }}
+                <small class="form-text text-muted">Permettre à cet utilisateur de modifier la structure du formulaire.</small>
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.can_view_responses(class="form-check-input") }}
+                {{ form.can_view_responses.label(class="form-check-label") }}
+                <small class="form-text text-muted">Permettre à cet utilisateur de voir les réponses soumises.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Partager</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Utilisateurs ayant accès</h5>
+    </div>
+    <div class="card-body">
+        {% if existing_shares %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Peut modifier</th>
+                        <th>Peut voir les réponses</th>
+                        <th>Partagé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for share in existing_shares %}
+                    <tr>
+                        <td>{{ share.shared_with.username }} ({{ share.shared_with.email }})</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if share.can_edit else 'danger' }}">
+                                {{ 'Oui' if share.can_edit else 'Non' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if share.can_view_responses else 'danger' }}">
+                                {{ 'Oui' if share.can_view_responses else 'Non' }}
+                            </span>
+                        </td>
+                        <td>{{ share.shared_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form action="{{ url_for('forms.delete_share', share_id=share.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir retirer l\'accès à cet utilisateur ?');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Retirer l'accès"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center">Ce formulaire n'est actuellement partagé avec aucun autre utilisateur.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('forms.edit_form', form_id=form_obj.id) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour à l'édition du formulaire
+    </a>
+</div>
+{% endblock %}

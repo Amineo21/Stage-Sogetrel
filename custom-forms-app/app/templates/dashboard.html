@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - Formulaires Personnalisés{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Tableau de bord</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if current_user.is_admin() %}
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Utilisateurs</h5>
+                    <p class="card-text display-4">{{ total_users }}</p>
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-light btn-sm">Gérer les utilisateurs</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Formulaires</h5>
+                    <p class="card-text display-4">{{ total_forms }}</p>
+                    <a href="{{ url_for('admin.manage_forms') }}" class="btn btn-light btn-sm">Gérer les formulaires</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Total Réponses</h5>
+                    <p class="card-text display-4">{{ total_responses }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-light btn-sm">Voir les réponses</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card text-white bg-primary h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Mes Formulaires</h5>
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <p class="card-text display-4">{{ current_user.forms.count() }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-light btn-sm">Voir tous les formulaires</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card text-white bg-success h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Mes Réponses</h5>
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <p class="card-text display-4">{{ current_user.form_responses.count() }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-light btn-sm">Voir les réponses</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card text-white bg-info h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Formulaires Partagés</h5>
+                        <i class="fas fa-share-alt fa-2x"></i>
+                    </div>
+                    <p class="card-text display-4">{{ current_user.shared_forms_with_me.count() }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-light btn-sm">Voir les partages</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Actions Rapides</h5>
+                    <a href="{{ url_for('forms.create_form') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Créer un nouveau formulaire
+                    </a>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('forms.list_forms') }}" class="text-decoration-none">Gérer mes formulaires</a>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('forms.create_form') }}" class="text-decoration-none">Commencer un nouveau formulaire</a>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </li>
+                        {% if current_user.is_admin() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none">Accéder au panneau d'administration</a>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.is_creator() or current_user.is_admin() %}
+    <h2 class="mt-5 mb-3">Mes Formulaires</h2>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Formulaires Créés par moi</h5>
+                    <p class="card-text display-4">{{ my_forms_count }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-primary btn-sm">Voir mes formulaires</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Réponses à mes formulaires</h5>
+                    <p class="card-text display-4">{{ responses_to_my_forms if current_user.is_creator() else total_responses }}</p>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-primary btn-sm">Voir les réponses</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mt-5 mb-3">Derniers formulaires créés</h2>
+    {% if latest_forms %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Description</th>
+                    <th>Créé le</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in latest_forms %}
+                <tr>
+                    <td>{{ form.title }}</td>
+                    <td>{{ form.description[:50] }}...</td>
+                    <td>{{ form.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td><span class="badge bg-{{ 'success' if form.is_active else 'danger' }}">{{ 'Actif' if form.is_active else 'Inactif' }}</span></td>
+                    <td>
+                        <a href="{{ url_for('forms.edit_form', form_id=form.id) }}" class="btn btn-sm btn-info">Modifier</a>
+                        <a href="{{ url_for('forms.view_responses', form_id=form.id) }}" class="btn btn-sm btn-secondary">Réponses</a>
+                        <a href="{{ url_for('forms.fill_form', form_id=form.id) }}" class="btn btn-sm btn-success" target="_blank">Remplir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>Aucun formulaire créé récemment.</p>
+    {% endif %}
+    {% endif %}
+
+    <h2 class="mt-5 mb-3">Mes dernières réponses soumises</h2>
+    {% if latest_responses %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID Réponse</th>
+                    <th>Formulaire</th>
+                    <th>Soumis le</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for response in latest_responses %}
+                <tr>
+                    <td>{{ response.id }}</td>
+                    <td>{{ response.form.title }}</td>
+                    <td>{{ response.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('forms.view_responses', form_id=response.form.id) }}" class="btn btn-sm btn-secondary">Voir</a>
+                        <a href="{{ url_for('api.export_form_response_pdf', form_id=response.form.id, response_id=response.id) }}" class="btn btn-sm btn-danger" target="_blank">PDF</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>Aucune réponse soumise récemment.</p>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h2>
+                    <p class="text-muted">Bienvenue, {{ current_user.username }} !</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('forms.create_form') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Nouveau formulaire
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <i class="fas fa-clipboard-list stat-icon text-primary"></i>
+                        </div>
+                        <div class="col">
+                            <h3 class="mb-0">{{ user_forms|length }}</h3>
+                            <p class="text-muted mb-0">Formulaires</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-eye me-1"></i>Voir tous
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <i class="fas fa-chart-bar stat-icon text-success"></i>
+                        </div>
+                        <div class="col">
+                            <h3 class="mb-0">{{ total_responses }}</h3>
+                            <p class="text-muted mb-0">Réponses</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Total des réponses reçues</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <i class="fas fa-share-alt stat-icon text-info"></i>
+                        </div>
+                        <div class="col">
+                            <h3 class="mb-0">{{ current_user.shared_forms|length }}</h3>
+                            <p class="text-muted mb-0">Partagés</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">Formulaires partagés avec moi</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <i class="fas fa-calendar stat-icon text-warning"></i>
+                        </div>
+                        <div class="col">
+                            <h3 class="mb-0">{{ current_user.created_at.strftime('%d/%m') }}</h3>
+                            <p class="text-muted mb-0">Membre depuis</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">{{ current_user.created_at.strftime('%B %Y') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaires récents -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Formulaires récents
+                    </h5>
+                    <a href="{{ url_for('forms.list_forms') }}" class="btn btn-outline-primary btn-sm">
+                        Voir tous
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_forms %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Réponses</th>
+                                        <th>Dernière modification</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in recent_forms %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ form.title }}</strong>
+                                                {% if form.description %}
+                                                    <br><small class="text-muted">{{ form.description[:50] }}{% if form.description|length > 50 %}...{% endif %}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ form.responses|length }}</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ form.updated_at.strftime('%d/%m/%Y à %H:%M') }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('forms.view_form', form_id=form.id) }}" class="btn btn-outline-info" title="Voir">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('forms.edit_form', form_id=form.id) }}" class="btn btn-outline-warning" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('forms.fill_form', form_id=form.id) }}" class="btn btn-outline-success" title="Remplir" target="_blank">
+                                                        <i class="fas fa-pen"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aucun formulaire créé</h6>
+                            <p class="text-muted">Créez votre premier formulaire pour commencer</p>
+                            <a href="{{ url_for('forms.create_form') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Créer un formulaire
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-rocket me-2"></i>Actions rapides
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('forms.create_form') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Créer un formulaire
+                        </a>
+                        <a href="{{ url_for('forms.list_forms') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>Gérer mes formulaires
+                        </a>
+                        <hr>
+                        <h6 class="text-muted">Aide et support</h6>
+                        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#helpModal">
+                            <i class="fas fa-question-circle me-1"></i>Guide d'utilisation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activité récente -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Activité récente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% if recent_forms %}
+                            {% for form in recent_forms[:3] %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">{{ form.title }}</h6>
+                                        <small class="text-muted">
+                                            Modifié {{ form.updated_at.strftime('%d/%m à %H:%M') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center">Aucune activité récente</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'aide -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-question-circle me-2"></i>Guide d'utilisation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-plus-circle text-primary me-2"></i>Créer un formulaire</h6>
+                        <p class="small text-muted">Utilisez l'interface glisser-déposer pour ajouter des champs à votre formulaire.</p>
+                        
+                        <h6><i class="fas fa-share text-info me-2"></i>Partager un formulaire</h6>
+                        <p class="small text-muted">Partagez vos formulaires avec d'autres utilisateurs en définissant leurs permissions.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-bar text-success me-2"></i>Analyser les réponses</h6>
+                        <p class="small text-muted">Consultez les réponses et exportez-les au format PDF ou Excel.</p>
+                        
+                        <h6><i class="fas fa-mobile-alt text-warning me-2"></i>Utilisation mobile</h6>
+                        <p class="small text-muted">L'interface est optimisée pour les mobiles et tablettes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -31px;
+    top: 15px;
+    width: 2px;
+    height: calc(100% + 10px);
+    background-color: #dee2e6;
+}
+
+.stat-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

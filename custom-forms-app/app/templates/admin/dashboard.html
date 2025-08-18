@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Admin{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Tableau de bord Administrateur</h1>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-primary h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Utilisateurs Totaux</h5>
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <p class="card-text display-4">{{ total_users }}</p>
+                <a href="{{ url_for('admin.manage_users') }}" class="btn btn-light btn-sm">Gérer les utilisateurs</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-success h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Formulaires Totaux</h5>
+                    <i class="fas fa-file-alt fa-2x"></i>
+                </div>
+                <p class="card-text display-4">{{ total_forms }}</p>
+                <a href="{{ url_for('admin.manage_forms') }}" class="btn btn-light btn-sm">Gérer les formulaires</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-white bg-info h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Réponses Totales</h5>
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <p class="card-text display-4">{{ total_responses }}</p>
+                <a href="{{ url_for('admin.manage_forms') }}" class="btn btn-light btn-sm">Voir les réponses</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Statistiques des Rôles</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Administrateurs
+                        <span class="badge bg-primary rounded-pill">{{ admins_count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Créateurs
+                        <span class="badge bg-info rounded-pill">{{ creators_count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Utilisateurs standards
+                        <span class="badge bg-secondary rounded-pill">{{ users_count }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Activité Récente (7 jours)</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Nouveaux utilisateurs
+                        <span class="badge bg-dark rounded-pill">{{ recent_users }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Nouveaux formulaires
+                        <span class="badge bg-dark rounded-pill">{{ recent_forms }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Nouvelles réponses
+                        <span class="badge bg-dark rounded-pill">{{ recent_responses }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Formulaires les plus populaires</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for form in popular_forms %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('forms.view_responses', form_id=form.id) }}">{{ form.title }}</a>
+                        <span class="badge bg-secondary rounded-pill">{{ form.response_count }} réponses</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item">Aucun formulaire populaire pour le moment.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Derniers utilisateurs enregistrés</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for user in recent_users_list %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ user.username }} ({{ user.email }})
+                        <span class="{{ user.get_role_badge_class() }}">{{ user.get_role_display() }}</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item">Aucun utilisateur récent.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
