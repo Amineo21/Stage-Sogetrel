@@ -8,11 +8,13 @@ from app.utils.email_service import send_form_submission_email
 import os
 import json
 from datetime import datetime
+from functools import wraps
 
 api_bp = Blueprint('api', __name__)
 
 # Helper pour vérifier les permissions d'édition (propriétaire ou partagé avec édition)
 def form_edit_access_required(f):
+    @wraps(f)
     @login_required
     def decorated_function(form_id, *args, **kwargs):
         form = Form.query.get_or_404(form_id)

@@ -83,6 +83,11 @@ class FormBuilderForm(FlaskForm):
     require_login_to_view = BooleanField('Exiger une connexion pour voir le formulaire', default=False)
     send_email_on_submit = BooleanField('Envoyer un email après soumission', default=False)
     email_recipients = StringField('Destinataires email (séparés par des virgules)', description='Emails qui recevront une notification après chaque soumission. Laissez vide pour ne pas envoyer.', validators=[Length(max=500)])
+    
+    # Nouveaux champs pour l'envoi automatique d'emails
+    auto_email_enabled = BooleanField('Activer l\'envoi automatique d\'emails', default=False)
+    fixed_recipients = TextAreaField('Destinataires fixes', description='Un email par ligne. Ces adresses recevront une copie de chaque soumission.', validators=[Length(max=1000)])
+    
     submit = SubmitField('Enregistrer le formulaire')
 
 class ShareForm(FlaskForm):

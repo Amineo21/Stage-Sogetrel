@@ -103,6 +103,7 @@ class Form(db.Model):
     # Relations
     responses = db.relationship('FormResponse', backref='form', lazy='dynamic')
     shares = db.relationship('FormShare', backref='form', lazy='dynamic')
+    email_logs = db.relationship('EmailLog', backref='form', lazy='dynamic')
     
     def __repr__(self):
         return f'<Form {self.title}>'
@@ -123,7 +124,7 @@ class FormResponse(db.Model):
     
     # Relations
     files = db.relationship('FormFile', backref='response', lazy='dynamic', cascade='all, delete-orphan')
-    email_logs = db.relationship('EmailLog', backref='response', lazy='dynamic')
+    email_logs = db.relationship('EmailLog', foreign_keys='EmailLog.response_id', backref='response', lazy='dynamic')
     
     def get_response_value(self, field_id):
         """Obtenir la valeur d'une réponse spécifique"""
@@ -204,16 +205,13 @@ class EmailLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # User who triggered the email (e.g., form submitter)
     form_id = db.Column(db.Integer, db.ForeignKey('forms.id'), nullable=True)  # Related form
+    response_id = db.Column(db.Integer, db.ForeignKey('form_responses.id'), nullable=True)  # Related response
     recipient_email = db.Column(db.String(255), nullable=False)
     subject = db.Column(db.String(255), nullable=False)
     body_preview = db.Column(db.Text)  # Short preview of the email body
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(50))  # e.g., 'sent', 'failed'
     error_message = db.Column(db.Text)  # If status is 'failed'
-    
-    # Relations
-    form = db.relationship('Form', backref='email_logs')
-    response = db.relationship('FormResponse', backref='email_logs')
     
     def __repr__(self):
         return f'<EmailLog {self.id} to {self.recipient_email} Status: {self.status}>'

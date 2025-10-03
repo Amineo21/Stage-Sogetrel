@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, send_file
 from flask_login import login_required, current_user
+from functools import wraps
 from app import db
 from app.models import Form, FormResponse, FormShare, User
 from app.forms import FormBuilderForm, ShareForm
@@ -10,12 +11,13 @@ from app.utils.helpers import save_file, delete_file, get_file_size, get_file_ex
 from app.utils.exports import export_to_excel
 from app.utils.email_service import send_form_submission_email
 import uuid
-import base64 # Ajout de l'importation de base64
+import base64
 
 forms_bp = Blueprint('forms', __name__)
 
 # Helper pour vérifier les permissions de créateur
 def creator_required(f):
+    @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_creator():
@@ -26,6 +28,7 @@ def creator_required(f):
 
 # Helper pour vérifier l'accès au formulaire (propriétaire ou partagé)
 def form_access_required(f):
+    @wraps(f)
     @login_required
     def decorated_function(form_id, *args, **kwargs):
         form = Form.query.get_or_404(form_id)
@@ -181,7 +184,7 @@ def fill_form(form_id):
             if field_type == 'file':
                 if field_name in request.files and request.files[field_name].filename != '':
                     file = request.files[field_name]
-                    filename = save_file(file, current_app.config['UPLOAD_FOLDER']) # Correction ici: save_uploaded_file -> save_file
+                    filename = save_file(file, current_app.config['UPLOAD_FOLDER'])
                     if filename:
                         response_data[field_id] = {
                             'filename': filename,
